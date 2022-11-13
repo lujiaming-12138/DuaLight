@@ -3,6 +3,9 @@
 This page give the code, data, scenarios, and demo results for our paper submission.
 
 ## Demo Results
+The result for Arterial 4x4 Scenario:
+
+![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Grid%204x4%20-%204%20methods.gif?raw=true)
 
 The result for Arterial 4x4 Scenario:
 
