@@ -11,3 +11,6 @@ The result for Arterial 4x4 Scenario:
 
 ![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Arterial%204x4.gif?raw=true)
 
+The result for Cologne Scenario:
+
+![Demo of Cologne Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Cologne%208.gif?raw=true)
