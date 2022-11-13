@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- generated on 2022-07-11 17:14:32.138025 by $Id: ptlines2flows.py v1_3_1+0313-ccb31df3eb jakob.erdmann@dlr.de 2019-09-02 13:26:32 +0200 $ UNKNOWN
+  options: 
+-->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="pt_bus" vClass="bus"/>
+    <vType id="pt_tram" vClass="tram"/>
+    <vType id="pt_train" vClass="rail"/>
+    <vType id="pt_subway" vClass="rail_urban"/>
+    <vType id="pt_light_rail" vClass="rail_urban"/>
+    <vType id="pt_monorail" vClass="rail"/>
+    <vType id="pt_trolleybus" vClass="bus"/>
+    <vType id="pt_minibus" vClass="bus"/>
+    <vType id="pt_share_taxi" vClass="taxi"/>
+    <vType id="pt_aerialway" vClass="bus"/>
+    <vType id="pt_ferry" vClass="ship"/>
+    <route id="pt_bus_226:0" color="1,173,156" edges="1050765262#0 1050765262#1 69570022#0 69570022#1 69570022#2 69570022#3 633620770 633620768-AddedOnRampEdge 633620768 633620769 25482638#1-AddedOnRampEdge 25482638#1 25482638#2 1051832577 565485208#0 565485208#0-AddedOffRampEdge 565485208#1 1050943008#0-AddedOnRampEdge 1050943008#0 1050943008#1 636236899 636236898#0 636236898#1 231405160 292313599#0 292313599#1 292313599#2 292313599#3 911272994#2 911272994#3 107586321#0" >
+        <stop busStop="5999843938" duration="20" until="278.0"/> <!-- 海普瑞 -->
+    </route>
+    <flow id="pt_bus_226:0" type="pt_bus" route="pt_bus_226:0" begin="383.0" end="3983.0" period="600" line="226:0" >
+        <param key="name" value="226路 赤湾总站 =&gt; 动物园总站"/>
+        <param key="completeness" value="0.03"/>
+    </flow>
+</routes>

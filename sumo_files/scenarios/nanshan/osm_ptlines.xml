@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2022-07-11 17:14:30 by Eclipse SUMO netconvert Version 1.13.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <type-files value="/usr/local/opt/sumo/share/sumo/data/typemap/osmNetconvert.typ.xml"/>
+        <osm-files value="osm_bbox.osm.xml.gz"/>
+    </input>
+
+    <output>
+        <output-file value="osm.net.xml"/>
+        <output.street-names value="true"/>
+        <output.original-names value="true"/>
+        <ptstop-output value="osm_stops.add.xml"/>
+        <ptline-output value="osm_ptlines.xml"/>
+    </output>
+
+    <projection>
+        <proj.utm value="true"/>
+    </projection>
+
+    <processing>
+        <geometry.remove value="true"/>
+        <roundabouts.guess value="true"/>
+    </processing>
+
+    <tls_building>
+        <tls.discard-simple value="true"/>
+        <tls.join value="true"/>
+        <tls.guess-signals value="true"/>
+        <tls.default-type value="actuated"/>
+    </tls_building>
+
+    <ramp_guessing>
+        <ramps.guess value="true"/>
+    </ramp_guessing>
+
+    <edge_removal>
+        <keep-edges.by-vclass value="passenger,bus,tram,rail_urban,rail"/>
+    </edge_removal>
+
+    <junctions>
+        <junctions.join value="true"/>
+        <junctions.corner-detail value="5"/>
+    </junctions>
+
+    <railway>
+        <railway.topology.repair value="true"/>
+        <railway.topology.repair.stop-turn value="true"/>
+    </railway>
+
+    <report>
+        <verbose value="true"/>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<ptLines xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/ptlines_file.xsd">
+    <ptLine id="13082804" name="603路 黄麻布总站 -&gt; 宝城三区总站" line="603" type="bus" vClass="bus" color="red" completeness="0.00"/>
+    <ptLine id="13163478" name="地铁 9号线：文锦 -&gt; 前湾" line="9" type="subway" vClass="rail_urban" color="132,110,116" completeness="0.00"/>
+    <ptLine id="8833823" name="226路 赤湾总站 =&gt; 动物园总站" line="226" type="bus" vClass="bus" color="1,173,156" completeness="0.03">
+        <route edges="1050765262#0 1050765262#1 69570022#0 69570022#1 69570022#2 69570022#3 636236928#0 403142813#0 403142813#1 403142813#3 1055022189 101315986#0 101315986#3 101315986#4 101315986#5 101315986#7 636236927#1 636236927#3 533976902 234239339#0 234239339#1 234239339#2 636236924 636236921#0 1050921389#1 636236918 636236914 636236908 1050942996#0 636236904#0 165265391 264614382 636236902#0 636236902#1 636236902#2 582188691 582188690 636236901 636236900 96326551 636236899 636236898#0 636236898#1 231405160 292313599#0 292313599#1 292313599#2 292313599#3 911272994#2 911272994#3 107586321#0"/>
+        <busStop id="5999843938" name="海普瑞"/>
+    </ptLine>
+</ptLines>

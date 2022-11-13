@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vehicle id="2_bus_226:0" type="pt_bus" depart="383.00" departLane="0" arrival="757.00">
+        <route edges="1050765262#0 1050765262#1 69570022#0 69570022#1 69570022#2 69570022#3 633620770 633620768-AddedOnRampEdge 633620768 633620769 25482638#1-AddedOnRampEdge 25482638#1 25482638#2 1051832577 565485208#0 565485208#0-AddedOffRampEdge 565485208#1 1050943008#0-AddedOnRampEdge 1050943008#0 1050943008#1 636236899 636236898#0 636236898#1 231405160 292313599#0 292313599#1 292313599#2 292313599#3 911272994#2 911272994#3 107586321#0"/>
+        <stop busStop="5999843938" duration="30.00"/>
+    </vehicle>
+
+</routes>

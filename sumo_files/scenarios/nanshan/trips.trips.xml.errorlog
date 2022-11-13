@@ -1,0 +1,6 @@
+Warning: At actuated tlLogic 'GS_cluster_1116448608_2402263661_4805962872_5178935331', linkIndex 2 has no controlling detector.
+Warning: At actuated tlLogic 'GS_cluster_1116448608_2402263661_4805962872_5178935331', linkIndex 3 has no controlling detector.
+Warning: At actuated tlLogic 'GS_cluster_1116448608_2402263661_4805962872_5178935331', linkIndex 4 has no controlling detector.
+Warning: At actuated tlLogic 'GS_cluster_2421445743_2425139422_2425139467_5179677560', linkIndex 12 has no controlling detector.
+Warning: At actuated tlLogic 'GS_cluster_2421445743_2425139422_2425139467_5179677560', linkIndex 13 has no controlling detector.
+Warning: 11 total messages of type: At actuated tlLogic '%', linkIndex % has no controlling detector.

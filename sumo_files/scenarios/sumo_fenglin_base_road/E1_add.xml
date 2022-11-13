@@ -1,0 +1,30 @@
+<additional>
+
+  <inductionLoop id="J28_w_r" lane="E25_0" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_w_t" lane="E25_1" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_w_l" lane="E25_2" pos="50" freq="300" file="E1_out.xml"/>
+
+  <inductionLoop id="J28_n_r" lane="E26_0" pos="-50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_n_t2" lane="E26_1" pos="-50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_n_t1" lane="E26_2" pos="-50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_n_l" lane="E26_3" pos="-50" freq="300" file="E1_out.xml"/>
+
+  <inductionLoop id="J28_s_r" lane="E24_0" pos="-50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_s_t" lane="E24_1" pos="-50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_s_l" lane="E24_2" pos="-50" freq="300" file="E1_out.xml"/>
+
+  <inductionLoop id="J28_e_r" lane="-E27.751_0" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_e_t" lane="-E27.751_1" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J28_e_l" lane="-E27.751_2" pos="50" freq="300" file="E1_out.xml"/>
+
+
+  <inductionLoop id="J12_e_r" lane="-E16.416_0" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J12_e_t" lane="-E16.416_1" pos="50" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J12_e_l" lane="-E16.416_2" pos="50" freq="300" file="E1_out.xml"/>
+
+  <inductionLoop id="J6_e_r" lane="-E12.352_0" pos="30" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J6_e_t" lane="-E12.352_1" pos="30" freq="300" file="E1_out.xml"/>
+  <inductionLoop id="J6_e_l" lane="-E12.352_2" pos="30" freq="300" file="E1_out.xml"/>
+
+
+</additional>

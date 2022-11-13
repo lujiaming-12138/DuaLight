@@ -1,0 +1,12 @@
+<additional>
+  
+   <e3Detector id="E3_J12_J6" freq="300" file="E3_out.xml">
+      <detEntry lane="-E16.416_0" pos="50"/>
+      <detEntry lane="-E16.416_1" pos="50"/>
+      <detEntry lane="-E16.416_2" pos="50"/>
+      <detExit lane="-E12.352_0" pos="30"/>
+      <detExit lane="-E12.352_1" pos="30"/>
+      <detExit lane="-E12.352_2" pos="30"/>
+   </e3Detector>
+
+</additional>

@@ -1,0 +1,6 @@
+eclipse-sumo==1.14.0
+traci
+sumolib
+libsumo
+torch==1.5.0
+tqdm
