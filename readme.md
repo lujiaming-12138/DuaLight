@@ -5,4 +5,5 @@ This page give the code, data, scenarios, and demo results for our paper submiss
 ## Demo Results
 
 The result for Arterial 4x4 SCENARIO:
-![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+
+![Demo of Arterial 4x4 SCENARIO](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Arterial%204x4.gif?raw=true)
