@@ -7,7 +7,7 @@ This page give the code, data, scenarios, and demo results for our paper submiss
 The result for Arterial 4x4 Scenario:
 
 ![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/arterial4x4_single_intersection.gif?raw=true)
-
+> As shown above, the Arterial 4x4 has quite high traffic volume, especially in the selected intersection: both FTC and GESA-Single get quite long traffic queue in the West and South entering approaches, and FTC also has long queue in the North approach. However, out GESA could promptly and dynamically release the traffic jam.
 
 The result for Cologne 8 Scenario:
 
