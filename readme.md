@@ -2,6 +2,16 @@
 
 This page give the code, data, scenarios, and demo results for our paper submission.
 
+## Updated: Demo Results for Zoomed Single Intersection
+
+The result for Arterial 4x4 Scenario:
+
+![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/arterial4x4_single_intersection.gif?raw=true)
+
+The result for Cologne 8 Scenario:
+
+![Demo of Cologne 8 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/cologne8_single_intersection.gif?raw=true)
+
 ## Demo Results
 
 The result for Grid 4x4 Scenario:
