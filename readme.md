@@ -19,7 +19,7 @@ The result for Cologne 8 Scenario:
 The result for Fenglin Scenario:
 
 ![Demo of Fenglin Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/fenglin_single_intersection.gif?raw=true)
-> As mentioned in the paper, Fenglin is a corridor with an East-West main road. As shown in the demo, high volume of traffic flow concentrated in the middle through-lane of the East entering approach, resulting in the traffic jam in the benchmark methods. GESA learned to turn the green light more frequently, easing the traffic congestion.
+> As mentioned in the paper, Fenglin is a corridor with an East-West main road. As shown in the demo, high volume of traffic flow concentrated in the middle through-lane of the East entering approach, resulting in the traffic jam in the benchmark methods. MaxPressure and GESA have fewer jams than MPLight in that lane, and GESA has fewer accumulated vehicles on other lanes.
 
 
 ## Demo Results
