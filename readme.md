@@ -7,16 +7,19 @@ This page give the code, data, scenarios, and demo results for our paper submiss
 The result for Arterial 4x4 Scenario:
 
 ![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/arterial4x4_single_intersection.gif?raw=true)
-> As shown above, the Arterial 4x4 has quite high traffic volume, especially in the selected intersection: both FTC and GESA-Single get quite long traffic queue in the West and South entering approaches, and FTC also has long queue in the North approach. However, out GESA could promptly and dynamically release the traffic jam.
+> As shown above, the Arterial 4x4 has quite high traffic volume, especially in the selected intersection: both FTC and GESA-Single get quite long traffic queues in the West and South entering approaches, and FTC also has a long queue in the North approach. However, our GESA could promptly and dynamically release the traffic jam.
+
 
 The result for Cologne 8 Scenario:
 
 ![Demo of Cologne 8 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/cologne8_single_intersection.gif?raw=true)
+> As shown in the demo, the North entering approach has quite high traffic inflow, and all the benchmarks could not release the flow on time, resulting in a long queue. Our GESA could release the jam timely.
 
 
 The result for Fenglin Scenario:
 
 ![Demo of Fenglin Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/fenglin_single_intersection.gif?raw=true)
+> As mentioned in the paper, Fenglin is a corridor with an East-West main road. As shown in the demo, high volume of traffic flow concentrated in the middle through-lane of the East entering approach, resulting in the traffic jam in the benchmark methods. GESA learned to turn the green light more frequently, easing the traffic congestion.
 
 
 ## Demo Results
