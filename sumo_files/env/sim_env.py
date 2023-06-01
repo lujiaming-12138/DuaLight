@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 """
-@paper: A GENERAL SCENARIO-AGNOSTIC REINFORCEMENT LEARNING FOR TRAFFIC SIGNAL CONTROL
+@author: Haoyuan Jiang
 @file: ts_control
+@time: 2022/7/18
 """
+import copy
 import os
 import subprocess
 import time
-
+import math
+import xml.etree.ElementTree
 import numpy as np
-
+import libsumo
 import traci
+import sumolib
 from sumolib import checkBinary
 from sumo_files.env.intersection import Intersection
 
@@ -29,12 +33,15 @@ class TSCSimulator:
         self.config = config
         self.output_path = config.get("output_path")
         self.reward_type = config.get("reward_type")
+        self.is_neighbor_reward = config.get("is_neighbor_reward", False)
         self.cfg = config
         self.step_num = config.get("step_num", 1)
+        self.p = config.get("p", 1) #for trip.xml output dir
         self._current_time = 0
-        self._init_sim(config.get("sumocfg_file"), self.seed, self.config.get("episode_length_time"), config.get("gui"))
+        self._init_sim(config.get("sumocfg_file"), self.seed,
+                       self.config.get("episode_length_time"), config.get("gui"))
         self.all_tls = list(self.sim.trafficlight.getIDList())
-        self.infastructure = self._infastructure_extraction(config.get("sumocfg_file"))
+        self.infastructure = self._infastructure_extraction1(config.get("sumocfg_file"))
         # delete invalid tl part 1
         rm_num = 0
         ora_num = len(self.all_tls)
@@ -53,7 +60,8 @@ class TSCSimulator:
         self.all_reward = {}
         self.tl_phase_index = []
         for tl in self.all_tls:
-            self._crosses[tl] = Intersection(tl, self.infastructure[tl], self, self.state_key, self.not_default)
+            self._crosses[tl] = Intersection(tl, self.infastructure[tl],
+                                             self, self.state_key, self.not_default)
             tl_ava = self._crosses[tl].get_tl_ava()
             if not tl_ava:
                 rm_tl.append(tl)
@@ -69,6 +77,13 @@ class TSCSimulator:
             self.tl_phase_index.append(self._crosses[tl].get_phase_index())
 
         print("Remove {} tl, percent: {}".format(rm_num, rm_num / ora_num))
+        
+        self.is_adjacency_remove = config.get("is_adjacency_remove", True)
+        self.adjacency_top_k = config.get("adjacency_top_k", 5)
+        
+        self.infastructure = self._infastructure_extraction2(config.get("sumocfg_file"),
+                                                             self.infastructure,
+                                                             config.get("is_dis", False))
 
         self.action_type = config.get('action_type')
 
@@ -93,32 +108,35 @@ class TSCSimulator:
         else:
             command = [checkBinary(app), '-c', sumocfg_file]
         command += ['--random']
-        command += ['--remote-port', str(self.port)]
-        command += ['--no-step-log', 'True']
-        if self.name != 'real_net':
-            command += ['--time-to-teleport',
-                        '600']  # long teleport for safety
-        else:
-            command += ['--time-to-teleport', '300']
+        # command += ['--remote-port', str(self.port)]
+        # command += ['--no-step-log', 'True']
+        # if self.name != 'real_net':
+        #     command += ['--time-to-teleport',
+        #                 '600']  # long teleport for safety
+        # else:
+        #     command += ['--time-to-teleport', '300']
         command += ['--no-warnings', 'True']
         command += ['--duration-log.disable', 'True']
         # collect trip info if necessary
         if self.is_record:
             if not os.path.exists(self.output_path):
                 try:
-                    os.mkdir(self.output_path)
+                    os.makedirs(self.output_path)
                 except:
                     pass
             command += ['--tripinfo-output',
                         self.output_path + ('%s_%s_%s_trip.xml' % (
-                            self.name, sumocfg_file.split("/")[-1], self.step_num)),
+                            self.name, sumocfg_file.split("/")[-1], self.p)),
                         '--tripinfo-output.write-unfinished']
-        subprocess.Popen(command)
+        # subprocess.Popen(command)
         self.step_num += 1
+        self.p += 1
         # wait 2s to establish the traci server
         time.sleep(5)
 
-        self.sim = traci.connect(port=self.port, numRetries=500)
+        libsumo.start(command)
+        self.sim = libsumo
+
         if sumocfg_file.split("/")[-1] == 'ingolstadt21.sumocfg':
             self._current_time = 57600 - 1
             self.episode_length_time += self._current_time
@@ -201,7 +219,24 @@ class TSCSimulator:
             self._crosses[tl].update_timestep()
         done = False
         obs = self._get_state()
-        reward = self._get_reward()
+        reward_ = self._get_reward()
+        # multi-agent reward sum with neighbor
+        if self.is_neighbor_reward:
+            reward = {}
+            for tl in self.all_tls:
+                reward[tl] = {}
+                for k in reward_[tl]:
+                    reward[tl][k] = reward_[tl][k]
+                    count = 0
+                    tmp = 0
+                    for nei in self._crosses[tl].nearset_inter[0][0]:
+                        if nei != -1:
+                            count += 1
+                            tmp += reward_[self.all_tls[nei]][k]
+                    if count > 0:
+                        reward[tl][k] += tmp / count
+        else:
+            reward = reward_
         for tl, v in reward.items():
             for k, r in v.items():
                 self.all_reward[tl][k] += r
@@ -231,7 +266,7 @@ class TSCSimulator:
         self._current_time = 0
         self._init_sim(self.cfg.get("sumocfg_file"), self.seed, self.config.get("episode_length_time"), self.cfg.get("gui"))
         self.step_num = self.step_num % 1400 + 1
-        self.infastructure = self._infastructure_extraction(self.cfg.get("sumocfg_file"))
+        # self.infastructure = self._infastructure_extraction1(self.cfg.get("sumocfg_file"))
         self.vehicle_info.clear()
         self.all_reward = {}
         for tl in self.all_tls:
@@ -243,7 +278,7 @@ class TSCSimulator:
     def reset_default(self):
         self._current_time = 0
         self._init_sim(self.cfg.get("sumocfg_file"), self.seed, self.config.get("episode_length_time"), self.cfg.get("gui"))
-        self.infastructure = self._infastructure_extraction(self.cfg.get("sumocfg_file"))
+        self.infastructure = self._infastructure_extraction1(self.cfg.get("sumocfg_file"))
         self.vehicle_info.clear()
         self.all_reward = {}
         for tl in self.all_tls:
@@ -258,8 +293,7 @@ class TSCSimulator:
             states[tid] = self._crosses[tid].get_state()
         return states
 
-    def _infastructure_extraction(self, sumocfg_file):
-        import xml.etree.ElementTree
+    def _infastructure_extraction1(self, sumocfg_file):
         e = xml.etree.ElementTree.parse(sumocfg_file).getroot()
         network_file_name = e.find('input/net-file').attrib['value']
         network_file = os.path.join(os.path.split(sumocfg_file)[0], network_file_name)
@@ -274,7 +308,7 @@ class TSCSimulator:
                                                     # "total_inter_num": None,
                                                     'adjacency_row': None}
                 traffic_light_node_dict[node_id]["phases"] = [child.attrib["state"] for child in tl]
-        total_inter_num = len(self.all_tls)
+
         # for index, item in enumerate(traffic_light_node_dict):
         #     traffic_light_node_dict[item]['total_inter_num'] = total_inter_num
 
@@ -297,32 +331,175 @@ class TSCSimulator:
                 traffic_light_node_dict[junction.attrib['id']]['location'] = \
                     {'x': float(junction.attrib['x']), 'y': float(junction.attrib['y'])}
 
-        top_k = 5
-        all_traffic_light = self.all_tls
-        for i in range(total_inter_num):
-            if 'location' not in traffic_light_node_dict[all_traffic_light[i]]:
-                continue
-            location_1 = traffic_light_node_dict[all_traffic_light[i]]['location']
-            row = np.array([0]*total_inter_num)
-            for j in range(total_inter_num):
-                if 'location' not in traffic_light_node_dict[all_traffic_light[j]]:
-                    row[j] = 1e8
-                    continue
-                location_2 = traffic_light_node_dict[all_traffic_light[j]]['location']
-                dist = self._cal_distance(location_1, location_2)
-                row[j] = dist
-            if len(row) == top_k:
-                adjacency_row_unsorted = np.argpartition(row, -1)[:top_k].tolist()
-            elif len(row) > top_k:
-                adjacency_row_unsorted = np.argpartition(row, top_k)[:top_k].tolist()
+        return traffic_light_node_dict
+
+    def bfs_find_neighbor(self, queue, edge_dict, net_lib, tl):
+        seen = set()
+        seen.add(tl)
+        parents = {tl: None}
+        while len(queue) > 0:
+            if edge_dict[queue[0]].attrib['from'] != tl:
+                if edge_dict[queue[0]].attrib['from'] not in self.all_tls:
+                    next_node = edge_dict[queue[0]].attrib['from']
+                    if next_node not in seen:
+                        seen.add(next_node)
+                        next_tmp_edges = net_lib.getNode(next_node).getIncoming()
+                        next_edges = {}
+                        for nte in next_tmp_edges:
+                            if edge_dict[nte._id].attrib['from'] == edge_dict[queue[0]].attrib['to']:
+                                continue
+                            # net_lib.getShortestPath(SC, CE)
+                            c1 = net_lib.getNode(edge_dict[nte._id].attrib['from']).getCoord()
+                            c2 = net_lib.getNode(next_node).getCoord()
+                            c1 = {"x": c1[0], "y": c1[1]}
+                            c2 = {"x": c2[0], "y": c2[1]}
+                            next_edges[nte._id] = self._cal_distance(c1, c2)
+                        if len(next_edges) > 0:
+                            next_edges = sorted(next_edges.items(), key=lambda item: item[1])
+                            next_edges = [ne[0] for ne in next_edges]
+                        queue.extend(next_edges)
+                        parents[next_node] = edge_dict[queue[0]].attrib['to']
+                    del queue[0]
+                else:
+                    assert edge_dict[queue[0]].attrib['from'] in self.all_tls and edge_dict[queue[0]].attrib['from'] != tl, "{}-{}".format(edge_dict[queue[0]].attrib['from'], tl)
+                    parents[edge_dict[queue[0]].attrib['from']] = edge_dict[queue[0]].attrib['to']
+                    return True, parents, edge_dict[queue[0]].attrib['from']
             else:
-                adjacency_row_unsorted = list(range(total_inter_num))
+                del queue[0]
+        return False, None, None
+            # length += self._cal_distance(
+            #     traffic_light_node_dict[
+            #         edge_dict[entering_sequence[es]].attrib['from']]['location'],
+            #     traffic_light_node_dict[
+            #         edge_dict[entering_sequence[es]].attrib['to']]['location']
+            # )
 
-            adjacency_row_unsorted.remove(i)
-            traffic_light_node_dict[all_traffic_light[i]]['adjacency_row'] = [i] + adjacency_row_unsorted
+    def _infastructure_extraction2(self, sumocfg_file, traffic_light_node_dict, dis=False):
+        e = xml.etree.ElementTree.parse(sumocfg_file).getroot()
+        network_file_name = e.find('input/net-file').attrib['value']
+        network_file = os.path.join(os.path.split(sumocfg_file)[0], network_file_name)
+        net = xml.etree.ElementTree.parse(network_file).getroot()
+        net_lib = sumolib.net.readNet(network_file)
 
-        # get lane length
+        # all_tls is deleted
+        all_traffic_light = self.all_tls
+        total_inter_num = len(self.all_tls)
+        if dis:
+            top_k = self.adjacency_top_k
+            for i in range(total_inter_num):
+                if 'location' not in traffic_light_node_dict[all_traffic_light[i]]:
+                    continue
+                location_1 = traffic_light_node_dict[all_traffic_light[i]]['location']
+                row = np.array([0] * total_inter_num)
+                for j in range(total_inter_num):
+                    if 'location' not in traffic_light_node_dict[all_traffic_light[j]]:
+                        row[j] = 1e8
+                        continue
+                    location_2 = traffic_light_node_dict[all_traffic_light[j]]['location']
+                    dist = self._cal_distance(location_1, location_2)
+                    row[j] = dist
+                if len(row) == top_k:
+                    adjacency_row_unsorted = np.argpartition(row, -1)[:top_k].tolist()
+                elif len(row) > top_k:
+                    adjacency_row_unsorted = np.argpartition(row, top_k)[:top_k].tolist()
+                else:
+                    adjacency_row_unsorted = list(range(total_inter_num))
 
+                if self.is_adjacency_remove:
+                    adjacency_row_unsorted.remove(i)
+                    
+                adjacency_row_unsorted = [j for j in adjacency_row_unsorted]
+                traffic_light_node_dict[all_traffic_light[i]]['adjacency_row'] = \
+                    [[adjacency_row_unsorted, row[adjacency_row_unsorted]], []]
+        else:
+            # adjacency_row is [entering NWSE neighbor, outgoing NWSE neighbor]
+            #  NWSE neighbor contain: 1. neighbor tl name 2. edge distance
+
+            edge_dict = {}
+            for edge in net.findall("edge"):
+                edge_dict[edge.attrib['id']] = edge
+
+            junction_dict = {}
+            for jun in net.findall("junction"):
+                junction_dict[jun.attrib["id"]] = jun
+
+            for i in self.all_tls:
+                # if i == '89173763':
+                # if i == 'J36':
+                #     print(1)
+                entering_sequence_NWSE = self._crosses[i].entering_sequence_NWSE
+                entering_sequence = self._crosses[i].entering_sequence
+                outgoing_sequence_NWSE = self._crosses[i].outgoing_sequence_NWSE
+                outgoing_sequence = self._crosses[i].outgoing_sequence
+                adjacency_row_entering = []
+                adjacency_distance_entering = []
+                adjacency_row_outgoing = []
+                adjacency_distance_outgoing = []
+                for es in entering_sequence_NWSE:
+                    if es != -1:
+                        queue = [entering_sequence[es]]
+                        # print(i)
+                        flag, parents, last_node = self.bfs_find_neighbor(queue, edge_dict, net_lib, i)
+                        # while edge_dict[queue[0]].attrib['from'] not in all_traffic_light:
+                        #     next_node = edge_dict[entering_sequence[es]].attrib['from']
+                        #     next_tmp_edges = net_lib.getNode(next_node).getIncoming()
+                        #     for index, nte in enumerate(next_tmp_edges):
+                        #         if edge_dict[nte].attrib['from'] == i:
+                        #             rm_index = index
+                        #             break
+                        #     del next_tmp_edges[rm_index]
+                        #     queue.extend(next_tmp_edges)
+                        if flag:
+                            length = 0
+                            last_node_ = last_node
+                            while parents[last_node] != None:
+                                coor1 = net_lib.getNode(last_node).getCoord()
+                                coor2 = net_lib.getNode(parents[last_node]).getCoord()
+                                c1 = {"x": coor1[0], "y": coor1[1]}
+                                c2 = {"x": coor2[0], "y": coor2[1]}
+                                length += self._cal_distance(c1, c2)
+                                if length > 700:
+                                    break
+                                last_node = parents[last_node]
+                            if length > 700:
+                                no_neigh = True
+                            else:
+                                no_neigh = False
+                        else:
+                            no_neigh = True
+                    else:
+                        no_neigh = True
+                    if no_neigh:
+                        adjacency_row_entering.append(-1)
+                        adjacency_distance_entering.append(1e8)
+                    else:
+                        adjacency_row_entering.append(
+                            self.all_tls.index(last_node_))
+                        adjacency_distance_entering.append(length / 100)
+                for os_ in outgoing_sequence_NWSE:
+                    if os_ != -1 and edge_dict[outgoing_sequence[os_]].attrib['to'] in all_traffic_light:
+                        adjacency_row_outgoing.append(
+                            self.all_tls.index(edge_dict[outgoing_sequence[os_]].attrib['to']))
+                        adjacency_distance_outgoing.append(self._cal_distance(
+                            traffic_light_node_dict[
+                                edge_dict[outgoing_sequence[os_]].attrib['from']]['location'],
+                            traffic_light_node_dict[
+                                edge_dict[outgoing_sequence[os_]].attrib['to']]['location']
+                        )/100)
+                    else:
+                        adjacency_row_outgoing.append(-1)
+                        adjacency_distance_outgoing.append(1e8)
+                traffic_light_node_dict[i]['adjacency_row'] = \
+                    [(adjacency_row_entering, adjacency_distance_entering),
+                     (adjacency_row_outgoing, adjacency_distance_outgoing)]
+
+        # debug
+        # for i in self.all_tls:
+        #     print(i)
+        #     for j in traffic_light_node_dict[i]['adjacency_row'][0][0]:
+        #         if j != -1:
+        #             print(self.all_tls[j])
+        #     print("")
         return traffic_light_node_dict
 
     @staticmethod
@@ -346,7 +523,7 @@ class TSCSimulator:
         east = np.int(np.argmax(x_all)/2)
         north = np.int(np.argmax(y_all)/2)
 
-        list_coord_sort=[west,north,east,south]
+        list_coord_sort = [west, north, east, south]
         return list_coord_sort
 
     @staticmethod
@@ -367,13 +544,14 @@ class TSCSimulator:
 
 if __name__ == '__main__':
     config = {
-        "name": "test",
+        "name": "colight",
         "agent": "",
-         # "sumocfg_file": "sumo_files/scenarios/nanshan/osm.sumocfg",
-        # "sumocfg_file": "sumo_files/scenarios/large_grid2/exp_0.sumocfg",
-        "sumocfg_file": "sumo_files/scenarios/sumo_wj3/rl_wj.sumocfg",
-        # "sumocfg_file": "sumo_files/scenarios/real_net/most_0.sumocfg",
+        "sumocfg_file": "rl-tsc/sumo_files/scenarios/nanshan/osm.sumocfg",
+        # "sumocfg_file": "sumo_files/scenarios/resco_envs/arterial4x4/arterial4x4.sumocfg",
+        # "sumocfg_file": "sumo_files/scenarios/resco_envs/cologne8/cologne8.sumocfg",
         # "sumocfg_file": "sumo_files/scenarios/sumo_fenglin_base_road/base.sumocfg",
+        # "sumocfg_file": "sumo_files/scenarios/resco_envs/ingolstadt21/ingolstadt21.sumocfg",
+
         "action_type": "select_phase",
         "gui": False,
         "yellow_duration": 5,
@@ -382,12 +560,15 @@ if __name__ == '__main__':
         'reward_type': ['queue_len', 'wait_time', 'delay_time', 'pressure', 'speed score'],
         'state_key': ['current_phase', 'car_num', 'queue_length', "occupancy", 'flow', 'stop_car_num', 'pressure']
     }
-    env = TSCSimulator(config, 123)
+    env = TSCSimulator(config, 1234)
     env.reset()
     all_tl = env.all_tls
     for i in range(100):
         tl_action_select = {}
         for tl in all_tl:
-            tl_action_select[tl] = np.random.choice(env._crosses[tl].green_phases)
+            a = np.random.choice(env._crosses[tl].green_phases)
+            while a / 2 in env._crosses[tl].unava_index:
+                a = np.random.choice(env._crosses[tl].green_phases)
+            tl_action_select[tl] = a
         next_obs, reward, done, _ = env.step(tl_action_select)
     env.terminate()

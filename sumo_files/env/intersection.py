@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 """
-@paper: A GENERAL SCENARIO-AGNOSTIC REINFORCEMENT LEARNING FOR TRAFFIC SIGNAL CONTROL
+@author: Haoyuan Jiang
 @file: ts_control
+@time: 2022/7/19
 """
 import numpy as np
 import re
@@ -16,7 +17,7 @@ class Intersection:
         self._id = tl_id
         self._env = env
         self.state = state
-        self.nearset_inter_index = msg['adjacency_row']
+        self.nearset_inter = msg['adjacency_row']
         self.location = msg.get('location')
         self.yellow_time = 5
         self.green_time = 30
@@ -50,29 +51,32 @@ class Intersection:
             for m in msgs:
                 self._incominglanes_links[in_line][m[0]].append(m[-2])
 
-        self.approaches2phase = {}
+        self.entering_approaches2phase = {}
         for i in self._incoming_lanes:
             approach = "_".join(i.split("_")[:-1])
-            if approach not in self.approaches2phase:
-                self.approaches2phase[approach] = {}
+            if approach not in self.entering_approaches2phase:
+                self.entering_approaches2phase[approach] = {}
             phase_index, directions = list(zip(*list(self._incominglanes_links[i].values())))
             if 's' in directions:
-                if 's' not in self.approaches2phase[approach]:
-                    self.approaches2phase[approach]['s'] = []
-                self.approaches2phase[approach]['s'].append([i, phase_index])
+                if 's' not in self.entering_approaches2phase[approach]:
+                    self.entering_approaches2phase[approach]['s'] = []
+                self.entering_approaches2phase[approach]['s'].append([i, phase_index])
             elif "l" in directions or "L" in directions or 't' in directions and len(
                     directions) == 1:
-                if 'l' not in self.approaches2phase[approach]:
-                    self.approaches2phase[approach]['l'] = []
-                self.approaches2phase[approach]['l'].append([i, phase_index])
+                if 'l' not in self.entering_approaches2phase[approach]:
+                    self.entering_approaches2phase[approach]['l'] = []
+                self.entering_approaches2phase[approach]['l'].append([i, phase_index])
             elif "r" in directions or "R" in directions:
-                if 'r' not in self.approaches2phase[approach]:
-                    self.approaches2phase[approach]['r'] = []
-                self.approaches2phase[approach]['r'].append([i, phase_index])
+                if 'r' not in self.entering_approaches2phase[approach]:
+                    self.entering_approaches2phase[approach]['r'] = []
+                self.entering_approaches2phase[approach]['r'].append([i, phase_index])
             else:
                 print(directions)
                 print("Not support")
-        self.sequence = list(self.approaches2phase.keys())
+        self.entering_sequence = list(self.entering_approaches2phase.keys())
+
+        self.outgoing_sequence = list("_".join(i.split("_")[:-1]) for i in msg['leaving_lanes'])
+
 
         pair = {}
         for j, v in self._incominglanes_links.items():
@@ -83,12 +87,21 @@ class Intersection:
                         pair[jj] = []
                     pair[jj].append(k)
 
-        order = []
-        for i in self.sequence:
-            order.append(msg['entering_lanes'].index(i + "_0"))
+        order_entering = []
+        for i in self.entering_sequence:
+            order_entering.append(msg['entering_lanes'].index(i + "_0"))
 
-        self.tl_ava, self.entering_sequence = self._coordinate_sequence(
-            msg["entering_lanes_pos"], order, pair, self.sequence)
+        order_outgoing = []
+        for i in self.outgoing_sequence:
+            order_outgoing.append(msg['leaving_lanes'].index(i + "_0"))
+
+        self.tl_ava, self.entering_sequence_NWSE = self._coordinate_sequence(
+            msg["entering_lanes_pos"], order_entering, True, pair, self.entering_sequence)
+
+        tl_av, self.outgoing_sequence_NWSE = self._coordinate_sequence(
+            msg["leaving_lanes_pos"], order_outgoing, False, pair, self.outgoing_sequence)
+        # assert tl_av == self.tl_ava
+        self.tl_ava = tl_av and self.tl_ava
         # v["entering_lanes"] = SumoEnv._sort_lane_id_by_sequence(msg["entering_lanes"] ,sequence=entering_sequence)
         # leaving_sequence = self._coordinate_sequence(msg["leaving_lanes_pos"], order, pair, len(self.sequence))
         # v["leaving_lanes"] = SumoEnv._sort_lane_id_by_sequence(msg["leaving_lanes"] ,sequence=leaving_sequence)
@@ -121,13 +134,13 @@ class Intersection:
         The phase index is : north(ls), west(ls), south(ls), east(ls)
         """
         self.phase_index = []
-        for i in self.entering_sequence:
+        for i in self.entering_sequence_NWSE:
             if i != -1:
-                seq_i = self.sequence[i]
+                seq_i = self.entering_sequence[i]
                 for s in self.seq:
                     _phase = []
-                    if s in self.approaches2phase[seq_i]:
-                        for l in self.approaches2phase[seq_i][s]:
+                    if s in self.entering_approaches2phase[seq_i]:
+                        for l in self.entering_approaches2phase[seq_i][s]:
                             _phase.extend(list((l[1])))
                         self.phase_index.append(_phase)
                     else:
@@ -140,38 +153,39 @@ class Intersection:
         return self.phase_index
 
     @staticmethod
-    def _coordinate_sequence(list_coord_str, order, pair, seq):
+    def _coordinate_sequence(list_coord_str, order, entering, pair, seq):
         """Result sequence is north, west, south, east."""
         dim = len(list_coord_str[0].split(" ")[0].split(","))
-        list_coordinate = [re.split(r'[ ,]', lane_str)[-2 * dim:] for lane_str in list_coord_str]
-        # x coordinate
-        # x_all = np.array(list_coordinate, dtype=float)[order][:, [0, 2]]
-        # west = np.int(np.argmin(x_all)/2)
-        #
-        # y_all = np.array(list_coordinate, dtype=float)[order][:, [1, 3]]
-        #
-        # south = np.int(np.argmin(y_all)/2)
-        #
-        # east = np.int(np.argmax(x_all)/2)
-        # north = np.int(np.argmax(y_all)/2)
+        if entering:
+            list_coordinate = [re.split(r'[ ,]', lane_str)[-2 * dim:]
+                               for lane_str in list_coord_str]
+            list_coordinate = np.array(list_coordinate, dtype=float)[order]
+            if dim == 3:
+                list_coordinate = np.concatenate([list_coordinate[:, :2], list_coordinate[:, 3:5]],
+                                                 axis=1)
+            delta_x = list_coordinate[:, 2] - list_coordinate[:, 0]
+            delta_y = list_coordinate[:, 3] - list_coordinate[:, 1]
+        else:
+            list_coordinate = [re.split(r'[ ,]', lane_str)[: 2 * dim]
+                               for lane_str in list_coord_str]
+            list_coordinate = np.array(list_coordinate, dtype=float)[order]
+            if dim == 3:
+                list_coordinate = np.concatenate([list_coordinate[:, :2], list_coordinate[:, 3:5]],
+                                                 axis=1)
+            delta_x = list_coordinate[:, 0] - list_coordinate[:, 2]
+            delta_y = list_coordinate[:, 1] - list_coordinate[:, 3]
 
-        list_coordinate = np.array(list_coordinate, dtype=float)[order]
-        if dim == 3:
-            list_coordinate = np.concatenate([list_coordinate[:, :2], list_coordinate[:, 3:5]],
-                                             axis=1)
-        delta_x = list_coordinate[:, 2] - list_coordinate[:, 0]
-        delta_y = list_coordinate[:, 3] - list_coordinate[:, 1]
         vectors = np.array([[delta_x[i], delta_y[i]] for i in range(len(delta_x))])
-        for n in range(len(vectors)):
-            north_ = [n]
+        if len(np.arange(len(list_coordinate))[(abs(delta_y) > abs(delta_x)) & (delta_y <= 0)])==1:
+            north_ = [np.arange(len(list_coordinate))[(abs(delta_y) > abs(delta_x)) & (delta_y <= 0)][0]]
             east_, south_, west_ = [], [], []
             for i in range(len(vectors)):
-                if i == n:
+                if i == north_[0]:
                     continue
-                sim = vectors[i].dot(vectors[0]) / (
-                            np.linalg.norm(vectors[i]) * np.linalg.norm(vectors[0]))
+                sim = vectors[i].dot(vectors[north_[0]]) / (
+                        np.linalg.norm(vectors[i]) * np.linalg.norm(vectors[north_[0]]))
                 theta = np.degrees(np.arccos(sim))
-                crs = np.cross(vectors[i], vectors[0])
+                crs = np.cross(vectors[i], vectors[north_[0]])
                 if crs < 0:
                     theta = 360 - theta
                 if theta < 135 and theta >= 45:
@@ -182,10 +196,68 @@ class Intersection:
                     west_.append(i)
                 else:
                     north_.append(i)
-
-            if len(east_) < 2 and len(south_) < 2 and len(north_) < 2 and len(west_) < 2:
-                break
-
+        elif len(np.arange(len(list_coordinate))[(abs(delta_x) > abs(delta_y)) & (delta_x <= 0)]) == 1:
+            east_ = np.arange(len(list_coordinate))[(abs(delta_x) > abs(delta_y)) & (delta_x <= 0)]
+            north_, south_, west_ = [], [], []
+            for i in range(len(vectors)):
+                if i == east_[0]:
+                    continue
+                sim = vectors[i].dot(vectors[east_[0]]) / (
+                        np.linalg.norm(vectors[i]) * np.linalg.norm(vectors[east_[0]]))
+                theta = np.degrees(np.arccos(sim))
+                crs = np.cross(vectors[i], vectors[east_[0]])
+                if crs < 0:
+                    theta = 360 - theta
+                if theta < 135 and theta >= 45:
+                    south_.append(i)
+                elif theta >= 135 and theta < 225:
+                    west_.append(i)
+                elif theta >= 225 and theta < 315:
+                    north_.append(i)
+                else:
+                    east_.append(i)
+        elif len(np.arange(len(list_coordinate))[(abs(delta_y) > abs(delta_x)) & (delta_y > 0)]) == 1:
+            south_ = np.arange(len(list_coordinate))[(abs(delta_y) > abs(delta_x)) & (delta_y > 0)]
+            north_, east_, west_ = [], [], []
+            for i in range(len(vectors)):
+                if i == south_[0]:
+                    continue
+                sim = vectors[i].dot(vectors[south_[0]]) / (
+                        np.linalg.norm(vectors[i]) * np.linalg.norm(vectors[south_[0]]))
+                theta = np.degrees(np.arccos(sim))
+                crs = np.cross(vectors[i], vectors[south_[0]])
+                if crs < 0:
+                    theta = 360 - theta
+                if theta < 135 and theta >= 45:
+                    west_.append(i)
+                elif theta >= 135 and theta < 225:
+                    north_.append(i)
+                elif theta >= 225 and theta < 315:
+                    east_.append(i)
+                else:
+                    south_.append(i)
+        elif len(np.arange(len(list_coordinate))[(abs(delta_x) > abs(delta_y)) & (delta_x > 0)]) == 1:
+            west_ = np.arange(len(list_coordinate))[(abs(delta_x) > abs(delta_y)) & (delta_x > 0)]
+            north_, east_, south_ = [], [], []
+            for i in range(len(vectors)):
+                if i == west_[0]:
+                    continue
+                sim = vectors[i].dot(vectors[west_[0]]) / (
+                        np.linalg.norm(vectors[i]) * np.linalg.norm(vectors[west_[0]]))
+                theta = np.degrees(np.arccos(sim))
+                crs = np.cross(vectors[i], vectors[west_[0]])
+                if crs < 0:
+                    theta = 360 - theta
+                if theta < 135 and theta >= 45:
+                    north_.append(i)
+                elif theta >= 135 and theta < 225:
+                    east_.append(i)
+                elif theta >= 225 and theta < 315:
+                    south_.append(i)
+                else:
+                    west_.append(i)
+        else:
+            return False, None
         if len(east_) >= 2 or len(south_) >= 2 or len(north_) >= 2 or len(west_) >= 2:
             return False, None
         east = east_[0] if len(east_) > 0 else -1
@@ -193,25 +265,6 @@ class Intersection:
         south = south_[0] if len(south_) > 0 else -1
         north = north_[0] if len(north_) > 0 else -1
         list_coord_sort = [north, west, south, east]  # seq index
-
-        # if seq_num < 4:
-        #     if seq_num == 3:
-        #         for i in range(4):
-        #             if seq[list_coord_sort[i]] + "_0" not in pair:
-        #                 list_coord_sort[i-2] = -1
-        #                 break
-        #     elif seq_num == 2:
-        #         delta_x = abs(x_all[:, 1] - x_all[:, 0])
-        #         delta_y = abs(y_all[:, 1] - y_all[:, 0])
-        #         if np.mean(delta_y) > np.mean(delta_x):
-        #             list_coord_sort[1] = -1
-        #             list_coord_sort[3] = -1
-        #         else:
-        #             list_coord_sort[0] = -1
-        #             list_coord_sort[2] = -1
-        #
-        #     else:
-        #         raise ValueError
 
         return True, list_coord_sort
 
@@ -296,7 +349,7 @@ class Intersection:
         specific action type.
         This is recommended for the action phase is in default tl logic.
         """
-        self._env.sim.trafficlight.setPhase(self._id, action)
+        self._env.sim.trafficlight.setPhase(self._id, int(action))
         self._env.sim.trafficlight.setPhaseDuration(self._id, duration)
 
     def set_phase(self, action, duration):
@@ -387,8 +440,10 @@ class Intersection:
                 else:
                     real_distance = cur_distace - self._env.vehicle_info[veh]['distance']
                     target_speed = self._env.sim.vehicle.getMaxSpeed(veh)
+                    self._env.vehicle_info[veh]['distance'] = cur_distace
                     target_distance = (cur_time - self._env.vehicle_info[veh][
                         'time']) * target_speed
+                    self._env.vehicle_info[veh]['time'] = cur_time
                     delay_time += (target_distance - real_distance) / (target_speed + 1e-8)
             delay_time_dict[lane] = delay_time
         return delay_time_dict
@@ -414,7 +469,7 @@ class Intersection:
             wait_time = np.average(list(self.get_lane_wait_time().values())) / 1000
             reward['wait_time'] = -wait_time
         if 'delay_time' in reward_type:
-            delay_time = np.average(list(self.get_lane_delay_time().values())) / 1e5
+            delay_time = np.average(list(self.get_lane_delay_time().values())) / 1e4
             reward['delay_time'] = -delay_time
         if 'pressure' in reward_type:
             pressure = self.get_pressure() / 5000
@@ -444,12 +499,12 @@ class Intersection:
         mask = []
         _flow = self.get_lane_traffic_volumn()
         current_phase = self.getCurrentPhase()
-        for i in range(len(self.entering_sequence)):
-            if self.entering_sequence[i] != -1:
-                seq_i = self.sequence[self.entering_sequence[i]]
+        for i in range(len(self.entering_sequence_NWSE)):
+            if self.entering_sequence_NWSE[i] != -1:
+                seq_i = self.entering_sequence[self.entering_sequence_NWSE[i]]
                 for s in self.seq:
                     obs = {}
-                    if s in self.approaches2phase[seq_i]:
+                    if s in self.entering_approaches2phase[seq_i]:
                         car_num = 0
                         stop_car_num = 0
                         occupancy = 0
@@ -457,7 +512,7 @@ class Intersection:
                         speed = 0
                         flow = 0
                         pressure = 0
-                        for l in self.approaches2phase[seq_i][s]:
+                        for l in self.entering_approaches2phase[seq_i][s]:
                             car_num += inline_car_number[l[0]]
                             occupancy += inline_occupancy[l[0]]
                             queue_length += inline_queue_length[l[0]]
@@ -465,24 +520,24 @@ class Intersection:
                             stop_car_num += inline_stop_car_number[l[0]]
                             flow += _flow[l[0]]
                             pressure += inline_stop_car_number_p[l[0]]
-                        for l in self.approaches2phase[seq_i][s]:
+                        for l in self.entering_approaches2phase[seq_i][s]:
                             for tmp_links in self.lans_link:
                                 for (incoming, outging, _) in tmp_links:
                                     if incoming == l[0]:
                                         pressure -= outline_stop_car_number_p[outging]
 
                         if "car_num" in self.state:
-                            obs['car_num'] = car_num / len(self.approaches2phase[seq_i][s])
+                            obs['car_num'] = car_num / len(self.entering_approaches2phase[seq_i][s])
                         if "stop_car_num" in self.state:
                             obs['stop_car_num'] = stop_car_num / len(
-                                self.approaches2phase[seq_i][s])
+                                self.entering_approaches2phase[seq_i][s])
                         if "occupancy" in self.state:
-                            obs['occupancy'] = occupancy / len(self.approaches2phase[seq_i][s])
+                            obs['occupancy'] = occupancy / len(self.entering_approaches2phase[seq_i][s])
                         if 'queue_length' in self.state:
                             obs['queue_length'] = queue_length / len(
-                                self.approaches2phase[seq_i][s])
+                                self.entering_approaches2phase[seq_i][s])
                         if "flow" in self.state:
-                            obs['flow'] = flow / len(self.approaches2phase[seq_i][s])
+                            obs['flow'] = flow / len(self.entering_approaches2phase[seq_i][s])
                         if "current_phase" in self.state:
                             res = 0 if s == 'l' else 1
                             tmp = 0
@@ -506,4 +561,4 @@ class Intersection:
                     mask.append(1)
                     main_direction_lanes.append({})
 
-        return main_direction_lanes, mask
+        return main_direction_lanes, mask, self.nearset_inter
