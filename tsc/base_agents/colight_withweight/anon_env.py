@@ -1,6 +1,3 @@
-'''
-Interactions with CityFlow, get/set values from CityFlow, pass it to RL agents
-'''
 
 import pickle
 import numpy as np

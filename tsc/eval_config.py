@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
-"""
-@author: Haoyuan Jiang
-@file: config
-@time: 2022/8/3
-"""
-name = 'IPPO'
+
+name = 'dualight'
 config = {
     "episode": {
         "num_train_rollouts": 100000,

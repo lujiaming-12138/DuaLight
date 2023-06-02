@@ -4,10 +4,6 @@ import pickle
 from agent import Agent
 import random 
 import time
-"""
-Model for CoLight in paper "CoLight: Learning Network-level Cooperation for Traffic Signal
-Control", in submission. 
-"""
 import keras
 from keras import backend as K
 from keras.optimizers import Adam, RMSprop

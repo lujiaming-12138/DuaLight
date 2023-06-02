@@ -1,8 +1,9 @@
-# Resources for "A General Scenario-Agnostic Reinforcement Learning for Traffic Signal Control"
+# Resources for "DuaLight: Enhancing Traffic Signal Control by Leveraging Scenario-Specific and Scenario-Shared Knowledge"
 
 This page give the code, data, scenarios, and demo results for our paper submission.
 
-## Updated: Demo Results for Zoomed Single Intersection (Micro-Level)
+Our code mainly base on [CoLight](https://github.com/wingsweihua/colight)
+<!-- ## Updated: Demo Results for Zoomed Single Intersection (Micro-Level)
 
 ### The result for Arterial 4x4 Scenario:
 
@@ -19,26 +20,38 @@ This page give the code, data, scenarios, and demo results for our paper submiss
 ### The result for Fenglin Scenario:
 
 ![Demo of Fenglin Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/fenglin_single_intersection.gif?raw=true)
-> As mentioned in the paper, Fenglin is a corridor with an East-West main road. As shown in the demo, high volume of traffic flow concentrated in the middle through-lane of the East entering approach, resulting in the traffic jam in the benchmark methods. MaxPressure and GESA have fewer jams than MPLight in that lane, and GESA has fewer accumulated vehicles on other lanes.
+> As mentioned in the paper, Fenglin is a corridor with an East-West main road. As shown in the demo, high volume of traffic flow concentrated in the middle through-lane of the East entering approach, resulting in the traffic jam in the benchmark methods. MaxPressure and GESA have fewer jams than MPLight in that lane, and GESA has fewer accumulated vehicles on other lanes. -->
 
 
 ## Demo Results for the Whole Scenario (Macro-Level)
 
+### The result for Nanshan Scenario:
+
+![Demo of Grid 4x4 Scenario](demo/osm_full.gif)
+
+### The result for Ingolstadt21 Scenario:
+
+![Demo of Grid 4x4 Scenario](demo/ing_full.gif)
+
+### The result for Grid 5x5 Scenario:
+
+![Demo of Grid 4x4 Scenario](demo/grid5_full.gif)
+
 ### The result for Grid 4x4 Scenario:
 
-![Demo of Grid 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Grid%204x4%20-%204%20methods.gif?raw=true)
+![Demo of Grid 4x4 Scenario](demo/grid4_full.gif)
 
 ### The result for Arterial 4x4 Scenario:
 
-![Demo of Arterial 4x4 Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Arterial%204x4.gif?raw=true)
+![Demo of Arterial 4x4 Scenario](demo/art_full.gif)
 
-### The result for Cologne Scenario:
+### The result for Cologne8 Scenario:
 
-![Demo of Cologne Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Cologne%208.gif?raw=true)
+![Demo of Cologne Scenario](demo/col_full.gif)
 
 ### The result for Fenglin Scenario:
 
-![Demo of Fenglin Scenario](https://github.com/AnonymousIDforSubmission/GESA/blob/main/demo_final/Fenglin.gif?raw=true)
+![Demo of Fenglin Scenario](demo/fenglin_full.gif)
 
 
 ## Scenarios introduction
@@ -66,7 +79,7 @@ To build more realistic scenarios, we manually construct the Nanshan scenario ba
 
 ## How to use
 
-**First**, you need to [install sumo](https://sumo.dlr.de/docs/Downloads.php) or install it from requirement.txt, and then you need to set SUMO_HOME in the environment variable. For example, if sumo is installed from requirement.txt, the env should be setted like:
+**First**, you need to [install sumo and python=3.6](https://sumo.dlr.de/docs/Downloads.php) or install it from requirement.txt, and then you need to set SUMO_HOME in the environment variable. For example, if sumo is installed from requirement.txt, the env should be setted like:
 
 ```shell
 export SUMO_HOME=/your python env path/lib/python3.6/site-packages/sumo
@@ -99,16 +112,15 @@ export PYTHONPATH=${PYTHONPATH}:/your own folder/root directory of this folder
  - Model training
 
 ```shell
-python -u tsc/main.py
+python tsc/base_agents/dualight/run_sumo_dualight.py
 ```
 
  - Eval
 
 ```shell
-python -u tsc/eval_v2.py   # Evaluate all checkpoints and save results.
-# or
-python -u tsc/eval_model.py  # Evaluate the specified checkpoint, you can also adjust eval_config for visualization
+python tsc/eval_metric.py
 ```
+Now you may find some results in the dir: sumo_logs
 
 
 

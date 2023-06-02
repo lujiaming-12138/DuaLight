@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # encoding: utf-8
-"""
-@author: Haoyuan Jiang
-@file: ts_control
-@time: 2022/7/19
-"""
 import numpy as np
 import re
 from tsc.utils import get_vector_cos_sim

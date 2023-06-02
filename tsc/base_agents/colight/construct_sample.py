@@ -278,7 +278,7 @@ class ConstructSample:
 
 
 if __name__=="__main__":
-    path_to_samples = "/Users/Wingslet/PycharmProjects/RLSignal/records/test/anon_3_3_test/train_round"
+    path_to_samples = "None"
     generator_folder = "generator_0"
 
     dic_traffic_env_conf  = {

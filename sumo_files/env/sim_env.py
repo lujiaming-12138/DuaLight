@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # encoding: utf-8
-"""
-@author: Haoyuan Jiang
-@file: ts_control
-@time: 2022/7/18
-"""
 import copy
 import os
 import subprocess
