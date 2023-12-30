@@ -97,7 +97,7 @@ export PYTHONPATH=${PYTHONPATH}:/your own folder/root directory of this folder
 
    ```shell
    cd ./sumo_files/scenarios/resco_envs/grid4x4/
-   unzip grip4x4.zip
+   unzip grid4x4.zip
    ```
 
  - unzip sumo_files/scenarios/resco_envs/arterial4x4/arterial4x4.zip to sumo_files/scenarios/resco_envs/arterial4x4.
